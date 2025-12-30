@@ -32,7 +32,7 @@ Contributors are encouraged to improve and extend it.
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/devsoc-aec/color-palette-generator.git
+git clone https://github.com/devsoc-aec/day2-color-palette-generator.git
 ```
 
 ### 2. Install dependencies
