@@ -82,8 +82,13 @@ export function AnimeNavBar({ items, className, defaultActive = "Home", theme, t
                                             href={item.url}
                                             onClick={(e) => {
                                                 e.preventDefault()
+                                                if (item.url.startsWith('#')) {
+                                                    const element = document.querySelector(item.url)
+                                                    if (element) {
+                                                        element.scrollIntoView({ behavior: 'smooth' })
+                                                    }
+                                                }
                                                 setActiveTab(item.name)
-                                                // If we are in scrolled mode and clicked a link, we might want to close the menu?
                                                 if (isMenuOpen) setIsMenuOpen(false)
                                             }}
                                             onMouseEnter={() => {

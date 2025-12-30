@@ -8,7 +8,10 @@ import AnimatedCopyButton from '@/components/ui/animated-copy-button'
 import { Copy, Plus, Minus, Lock, Unlock } from 'lucide-react'
 import { cn } from "@/lib/utils"
 import { Home, Palette, Save, Heart } from 'lucide-react'
-import { AnimeNavBar } from '@/components/ui/anime-navbar'
+import { AnimeNavBar } from '@/components/ui/anime-navbar.tsx'
+import { FeedbackSection } from '@/components/FeedbackSection'
+import { ThankYouPage } from '@/components/ThankYouPage'
+import { MinimalFooter } from '@/components/MinimalFooter'
 
 function App() {
   const [colors, setColors] = useState({
@@ -30,7 +33,36 @@ function App() {
   }, [theme])
 
   const toggleTheme = () => {
-    setTheme(prev => prev === 'light' ? 'dark' : 'light')
+    const newTheme = theme === 'light' ? 'dark' : 'light';
+    setTheme(newTheme);
+
+    const isNewThemeDark = newTheme === 'dark';
+
+    // Helper to adjust lightness for contrast
+    const adjustForContrast = (hexColor) => {
+      const { h, s, l } = hexToHslValues(hexColor);
+      let newL = l;
+
+      if (isNewThemeDark) {
+        // Dark Mode: Needs brighter colors (Pastel/Neon) -> Min Lightness 50%
+        newL = Math.max(l, 50);
+      } else {
+        // Light Mode: Needs darker colors -> Max Lightness 60%
+        newL = Math.min(l, 60);
+      }
+      return hslToHex(h, s, newL);
+    };
+
+    const newColors = {
+      background: colors.text,
+      text: colors.background,
+      primary: adjustForContrast(colors.primary),
+      secondary: adjustForContrast(colors.secondary),
+      accent: adjustForContrast(colors.accent)
+    };
+
+    setColors(newColors);
+    applyTheme(newColors);
   }
 
   useEffect(() => {
@@ -48,8 +80,8 @@ function App() {
     }
   }
 
-  // Helper to convert hex to HSL for CSS variables
-  const hexToHsl = (hex) => {
+  // Helper to parse Hex to HSL values object
+  const hexToHslValues = (hex) => {
     let r = 0, g = 0, b = 0;
     if (hex.length === 4) {
       r = "0x" + hex[1] + hex[1];
@@ -83,6 +115,12 @@ function App() {
     s = +(s * 100).toFixed(1);
     l = +(l * 100).toFixed(1);
 
+    return { h, s, l };
+  }
+
+  // Helper to convert hex to HSL for CSS variables
+  const hexToHsl = (hex) => {
+    const { h, s, l } = hexToHslValues(hex);
     return `${h} ${s}% ${l}%`;
   }
 
@@ -295,18 +333,34 @@ function App() {
       .catch(err => console.error('Failed to copy:', err));
   };
 
+  useEffect(() => {
+    // Apply theme class to document element
+    const root = window.document.documentElement
+    root.classList.remove("light", "dark")
+    root.classList.add(theme)
+  }, [theme])
+
+  // Thank You Page Logic
+  const [showThankYou, setShowThankYou] = useState(false);
+
+  if (showThankYou) {
+    return <ThankYouPage onComplete={() => setShowThankYou(false)} />;
+  }
+
   const navItems = [
-    { name: "Home", url: "#", icon: Home }, 
+    { name: "Home", url: "#home", icon: Home },
     { name: "Generate", url: "#generator", icon: Palette },
     { name: "Saved", url: "#saved", icon: Save },
-    { name: "Feedback", url: "#features", icon: Heart },
+    { name: "Feedback", url: "#feedback", icon: Heart },
   ]
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-32 transition-colors duration-500">
       <AnimeNavBar items={navItems} defaultActive="Generate" theme={theme} toggleTheme={toggleTheme} />
       
-      <Hero onGenerate={generateRandomPalette} />
+      <div id="home">
+        <Hero onGenerate={generateRandomPalette} />
+      </div>
 
       <div id="features">
         <FeatureSection />
@@ -395,6 +449,10 @@ function App() {
           </div>
         )}
       </div>
+
+      <FeedbackSection onSubmitSuccess={() => setShowThankYou(true)} />
+
+      <MinimalFooter />
 
       <Toolbar
         colors={colors}
